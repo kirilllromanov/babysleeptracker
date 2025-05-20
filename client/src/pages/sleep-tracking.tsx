@@ -10,19 +10,23 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoonIcon } from "@/assets/icons";
+import { format } from "date-fns";
+import { MoonIcon, CalendarIcon } from "@/assets/icons";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { cn } from "@/lib/utils";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import { format } from "date-fns";
+
 
 // Form schema for sleep tracking
 const sleepTrackingSchema = z.object({
   childId: z.string().min(1, "Please select a child"),
-  startTime: z.string().refine(time => !isNaN(Date.parse(time)), {
-    message: "Please enter a valid time",
+  startTime: z.date({
+    required_error: "Please select a start date and time.",
   }),
   endTimeOption: z.enum(["specific", "stillSleeping"]),
-  endTime: z.string().optional(),
+  endTime: z.date().optional(),
 });
 
 type SleepTrackingValues = z.infer<typeof sleepTrackingSchema>;
@@ -31,12 +35,12 @@ export default function SleepTracking() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  
+
   // Load children for the dropdown
   const { data: children, isLoading } = useQuery<Child[]>({
     queryKey: ["/api/children"],
   });
-  
+
   // Get current date and time in local format
   const now = new Date();
   const currentDateTime = format(now, "yyyy-MM-dd'T'HH:mm");
@@ -45,9 +49,9 @@ export default function SleepTracking() {
     resolver: zodResolver(sleepTrackingSchema),
     defaultValues: {
       childId: "",
-      startTime: currentDateTime,
+      startTime: now,
       endTimeOption: "stillSleeping",
-      endTime: "",
+      endTime: undefined,
     },
   });
 
@@ -55,42 +59,42 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
-      const startTime = new Date(values.startTime);
+      const startTime = values.startTime;
       startTime.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
-      
-      const endTime = values.endTimeOption === "specific" && values.endTime 
-        ? new Date(values.endTime)
+
+      const endTime = values.endTimeOption === "specific" && values.endTime
+        ? values.endTime
         : undefined;
-      
+
       if (endTime) {
         endTime.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
       }
-      
+
       const payload = {
         childId: parseInt(values.childId),
         startTime,
         isActive: values.endTimeOption === "stillSleeping",
         endTime,
       };
-      
+
       const response = await apiRequest("POST", "/api/sleep-records", payload);
       const sleepRecord = await response.json();
-      
+
       // Invalidate queries to refresh data
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/children/${payload.childId}/sleep-records`] 
+      queryClient.invalidateQueries({
+        queryKey: [`/api/children/${payload.childId}/sleep-records`]
       });
-      queryClient.invalidateQueries({ 
-        queryKey: [`/api/children/${payload.childId}/active-sleep`] 
+      queryClient.invalidateQueries({
+        queryKey: [`/api/children/${payload.childId}/active-sleep`]
       });
-      
+
       toast({
         title: "Sleep tracking started",
         description: values.endTimeOption === "stillSleeping"
           ? "Sleep session is now active"
           : "Sleep session recorded",
       });
-      
+
       // If specific end time was provided, go to quality assessment
       if (values.endTimeOption === "specific" && sleepRecord.id) {
         navigate(`/sleep-quality?sleepId=${sleepRecord.id}`);
@@ -108,7 +112,7 @@ export default function SleepTracking() {
   }
 
   const handleNowClick = () => {
-    form.setValue("startTime", currentDateTime);
+    form.setValue("startTime", now);
   };
 
   return (
@@ -127,8 +131,8 @@ export default function SleepTracking() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Select Child</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -154,39 +158,57 @@ export default function SleepTracking() {
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="startTime"
                 render={({ field }) => (
-                  <FormItem>
+                  <FormItem className="flex flex-col">
                     <FormLabel>Start Time</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input type="datetime-local" {...field} />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handleNowClick}
-                      >
-                        Now
-                      </Button>
-                    </div>
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <FormControl>
+                          <Button
+                            variant={"outline"}
+                            className={cn(
+                              "w-[240px] pl-3 text-left font-normal",
+                              !field.value && "text-muted-foreground"
+                            )}
+                          >
+                            {field.value ? (
+                              format(field.value, "yyyy-MM-dd HH:mm")
+                            ) : (
+                              <span>Pick a date</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                          </Button>
+                        </FormControl>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          disabled={(date) =>
+                            date > new Date()
+                          }
+                          initialFocus
+                        />
+                      </PopoverContent>
+                    </Popover>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              
+
               <FormField
                 control={form.control}
                 name="endTimeOption"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>End Time</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
+                    <Select
+                      onValueChange={field.onChange}
                       defaultValue={field.value}
                     >
                       <FormControl>
@@ -203,31 +225,55 @@ export default function SleepTracking() {
                   </FormItem>
                 )}
               />
-              
+
               {watchEndTimeOption === "specific" && (
                 <FormField
                   control={form.control}
                   name="endTime"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Specific End Time</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="datetime-local" 
-                          {...field} 
-                          value={field.value || ""} 
-                        />
-                      </FormControl>
+                     <FormItem className="flex flex-col">
+                      <FormLabel>End Time</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-[240px] pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                              )}
+                            >
+                              {field.value ? (
+                                format(field.value, "yyyy-MM-dd HH:mm")
+                              ) : (
+                                <span>Pick a date</span>
+                              )}
+                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                              date > new Date()
+                            }
+                            initialFocus
+                          />
+                        </PopoverContent>
+                      </Popover>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
               )}
-              
+
               <div className="flex space-x-3 pt-4">
-                <Button 
-                  type="button" 
-                  variant="outline" 
+                <Button
+                  type="button"
+                  variant="outline"
                   className="flex-1"
                   onClick={() => navigate("/")}
                 >
