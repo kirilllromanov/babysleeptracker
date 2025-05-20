@@ -46,10 +46,9 @@ export default function AddChild() {
 
   async function onSubmit(values: ChildFormValues) {
     try {
-      // Convert string date to Date object
       const formattedValues = {
         ...values,
-        birthDate: new Date(values.birthDate),
+        birthDate: new Date(values.birthDate + "T00:00:00.000Z"),
       };
       
       await apiRequest("POST", "/api/children", formattedValues);
