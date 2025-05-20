@@ -1,0 +1,46 @@
+Develop a mobile application to help parents track their baby’s sleep and predict the next optimal nap time. The app will leverage the GPT API for intelligent analysis of sleep patterns, providing predictions based on recorded data.
+
+Core Features:
+
+1. Child Management:
+    - Add a child profile (name, birth date, gender)
+    - Add multiple children
+    - Edit or delete child information
+2. Sleep Tracking:
+    - Start sleep tracking (specifying exact start time or chose “now”)
+    - End sleep tracking (specifying exact wake-up time or chose “Still sleeping”) - Indicate if the child is still sleeping
+    - Track sleep (start and end times)
+3. Sleep Quality Assessment:
+    - Rate the quality of sleep (options: slept well, woke up often, cried, tossed a lot)
+4. Sleep Prediction:
+    - Predict the next sleep window using the GPT API
+    - Show bedtime
+    - Show the time until bedtime
+5. Step-by-step flow: 
+    1. First screen. - welcome screen and Button “+ Add Your Children” 
+    2. By clicking “+ Add Your Children” - Screen with inputs for Name, Date of Birth and Gender
+    3. Next screen is the main screen consist of: 
+        1.  dropdown for choosing the baby 
+            1. user can see all the added babies in dropdown and switch between them
+        2. Add the baby button “+”
+            1. Clicking the Add the baby button “+”  Screen with inputs for Name, Date of Birth and Gender opened 
+        3. Sleep tracking button 
+            1. By clicking Sleep tracking button user have to see inputs 
+                1. Start time - choose time or click “now” 
+                2. End time - choose time or click “still sleeping” 
+                    1. If user choose “still sleeping” - user see on the main screen the time in the bed and “end sleep” button 
+                        1. When user click “end sleep” button - the screen with sleeping quality assessment appears 
+                            1. sleeping quality assessment screen consist of inputs: 
+                                1. time 
+                                2. quality (slept well, average, poor sleep, very poor) 
+                    2. If user choose end time - the main screen appears 
+        4. time since wake up 
+        5. next sleep prediction (based on chat GPT response) 
+            1. Time to bed 
+            2. time until bedtime 
+            3. expected sleep duration 
+6. Design 
+    1. Night-theme
+    - Colors: dark navy background, lavender, soft blue, gentle orange accents
+    - Minimalist icons (sunrise, cloud, moon) for intuitive visual cues
+    - Responsive design for mobile devices
