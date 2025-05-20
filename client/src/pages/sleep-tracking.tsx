@@ -7,10 +7,6 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Child } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { CalendarIcon } from "lucide-react";
-import { format } from "date-fns";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -163,63 +159,21 @@ export default function SleepTracking() {
                 control={form.control}
                 name="startTime"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <Popover>
-                      <PopoverTrigger asChild>
-                        <FormControl>
-                          <Button
-                            variant="outline"
-                            className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
-                          >
-                            {field.value ? (
-                              format(new Date(field.value), "PPP HH:mm")
-                            ) : (
-                              <span>Pick a date and time</span>
-                            )}
-                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                          </Button>
-                        </FormControl>
-                      </PopoverTrigger>
-                      <PopoverContent className="w-auto p-0" align="start">
-                        <div className="p-3 border-b">
-                          <Calendar
-                            mode="single"
-                            selected={field.value ? new Date(field.value) : undefined}
-                            onSelect={(date) => {
-                              if (date) {
-                                const currentValue = field.value ? new Date(field.value) : new Date();
-                                date.setHours(currentValue.getHours(), currentValue.getMinutes());
-                                field.onChange(date.toISOString());
-                              }
-                            }}
-                            disabled={(date) => date > new Date()}
-                            initialFocus
-                          />
-                        </div>
-                        <div className="p-3 border-t">
-                          <Input
-                            type="time"
-                            value={field.value ? format(new Date(field.value), "HH:mm") : ""}
-                            onChange={(e) => {
-                              const [hours, minutes] = e.target.value.split(':');
-                              const date = field.value ? new Date(field.value) : new Date();
-                              date.setHours(parseInt(hours), parseInt(minutes));
-                              field.onChange(date.toISOString());
-                            }}
-                          />
-                        </div>
-                        <div className="p-3 border-t flex justify-between">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={handleNowClick}
-                          >
-                            Now
-                          </Button>
-                        </div>
-                      </PopoverContent>
-                    </Popover>
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
+                      <Button 
+                        type="button" 
+                        variant="outline" 
+                        size="sm"
+                        onClick={handleNowClick}
+                      >
+                        Now
+                      </Button>
+                    </div>
                     <FormMessage />
                   </FormItem>
                 )}
