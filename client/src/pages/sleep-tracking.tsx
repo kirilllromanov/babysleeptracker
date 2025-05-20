@@ -55,13 +55,22 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
+      const startTime = new Date(values.startTime);
+      startTime.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+      
+      const endTime = values.endTimeOption === "specific" && values.endTime 
+        ? new Date(values.endTime)
+        : undefined;
+      
+      if (endTime) {
+        endTime.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
+      }
+      
       const payload = {
         childId: parseInt(values.childId),
-        startTime: new Date(values.startTime),
+        startTime,
         isActive: values.endTimeOption === "stillSleeping",
-        endTime: values.endTimeOption === "specific" && values.endTime 
-          ? new Date(values.endTime) 
-          : undefined,
+        endTime,
       };
       
       const response = await apiRequest("POST", "/api/sleep-records", payload);
