@@ -8,10 +8,6 @@ import { Child } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
-import { CalendarIcon } from "@/assets/icons";
-import { cn } from "@/lib/utils";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoonIcon } from "@/assets/icons";
@@ -163,57 +159,12 @@ export default function SleepTracking() {
                 control={form.control}
                 name="startTime"
                 render={({ field }) => (
-                  <FormItem className="flex flex-col">
+                  <FormItem>
                     <FormLabel>Start Time</FormLabel>
                     <div className="flex space-x-2">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <FormControl>
-                            <Button
-                              variant="outline"
-                              className={cn(
-                                "w-full pl-3 text-left font-normal",
-                                !field.value && "text-muted-foreground"
-                              )}
-                            >
-                              {field.value ? (
-                                format(new Date(field.value), "PPP p")
-                              ) : (
-                                <span>Pick a date</span>
-                              )}
-                              <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                            </Button>
-                          </FormControl>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar
-                            mode="single"
-                            selected={new Date(field.value)}
-                            onSelect={(date) => {
-                              if (date) {
-                                const currentValue = new Date(field.value);
-                                date.setHours(currentValue.getHours());
-                                date.setMinutes(currentValue.getMinutes());
-                                field.onChange(date.toISOString());
-                              }
-                            }}
-                            initialFocus
-                          />
-                          <div className="p-3 border-t border-border">
-                            <Input
-                              type="time"
-                              value={format(new Date(field.value), "HH:mm")}
-                              onChange={(e) => {
-                                const [hours, minutes] = e.target.value.split(":");
-                                const date = new Date(field.value);
-                                date.setHours(parseInt(hours));
-                                date.setMinutes(parseInt(minutes));
-                                field.onChange(date.toISOString());
-                              }}
-                            />
-                          </div>
-                        </PopoverContent>
-                      </Popover>
+                      <FormControl>
+                        <Input type="datetime-local" {...field} />
+                      </FormControl>
                       <Button 
                         type="button" 
                         variant="outline" 
