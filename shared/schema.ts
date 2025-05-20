@@ -10,7 +10,12 @@ export const children = pgTable("children", {
   gender: text("gender").notNull(),
 });
 
-export const insertChildSchema = createInsertSchema(children).pick({
+export const insertChildSchema = createInsertSchema(children, {
+  birthDate: z.coerce.date({
+    required_error: "Please select a birth date",
+    invalid_type_error: "That's not a valid date",
+  }),
+}).pick({
   name: true,
   birthDate: true,
   gender: true,
