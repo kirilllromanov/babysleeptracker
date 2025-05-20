@@ -46,9 +46,13 @@ export default function AddChild() {
 
   async function onSubmit(values: ChildFormValues) {
     try {
+      const birthDate = new Date(values.birthDate);
+      // Set time to noon UTC to avoid timezone issues
+      birthDate.setUTCHours(12, 0, 0, 0);
+      
       const formattedValues = {
         ...values,
-        birthDate: new Date(values.birthDate + "T00:00:00.000Z"),
+        birthDate,
       };
       
       await apiRequest("POST", "/api/children", formattedValues);
