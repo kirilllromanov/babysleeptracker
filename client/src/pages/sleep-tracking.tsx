@@ -158,28 +158,43 @@ export default function SleepTracking() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input 
-                          type="datetime-local" 
-                          {...field} 
-                          value={field.value || ''} 
-                          onChange={(e) => {
-                            const date = new Date(e.target.value);
-                            if (!isNaN(date.getTime())) {
-                              field.onChange(date.toISOString());
-                            }
-                          }}
-                        />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handleNowClick}
-                      >
-                        Now
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input 
+                            type="date" 
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
+                            onChange={(e) => {
+                              const currentTime = field.value ? new Date(field.value) : new Date();
+                              const [year, month, day] = e.target.value.split('-');
+                              currentTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+                              field.onChange(currentTime.toISOString());
+                            }}
+                          />
+                        </FormControl>
+                      </div>
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input 
+                            type="time" 
+                            value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
+                            onChange={(e) => {
+                              const currentDate = field.value ? new Date(field.value) : new Date();
+                              const [hours, minutes] = e.target.value.split(':');
+                              currentDate.setHours(parseInt(hours), parseInt(minutes));
+                              field.onChange(currentDate.toISOString());
+                            }}
+                          />
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleNowClick}
+                        >
+                          Now
+                        </Button>
+                      </div>
                     </div>
                     <FormMessage />
                   </FormItem>
