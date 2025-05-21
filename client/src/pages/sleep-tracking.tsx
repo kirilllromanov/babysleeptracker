@@ -55,13 +55,21 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
-      const startTime = new Date(values.startTime).toISOString();
+      // Ensure proper date formatting by creating Date objects
+      const startTime = new Date(values.startTime);
+      startTime.setSeconds(0, 0); // Reset seconds and milliseconds
       
-      const endTime = values.endTimeOption === "specific" && values.endTime 
-        ? new Date(values.endTime).toISOString()
-        : undefined;
+      let endTime;
+      if (values.endTimeOption === "specific" && values.endTime) {
+        endTime = new Date(values.endTime);
+        endTime.setSeconds(0, 0);
+      }
       
       const payload = {
+        childId: parseInt(values.childId),
+        startTime: startTime.toISOString(),
+        endTime: endTime?.toISOString(),
+        isActive: values.endTimeOption === "stillSleeping",
         childId: parseInt(values.childId),
         startTime,
         isActive: values.endTimeOption === "stillSleeping",
