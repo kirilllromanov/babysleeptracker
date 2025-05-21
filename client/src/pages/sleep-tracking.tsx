@@ -69,11 +69,7 @@ export default function SleepTracking() {
         childId: parseInt(values.childId),
         startTime: startTime.toISOString(),
         endTime: endTime?.toISOString(),
-        isActive: values.endTimeOption === "stillSleeping",
-        childId: parseInt(values.childId),
-        startTime,
-        isActive: values.endTimeOption === "stillSleeping",
-        endTime,
+        isActive: values.endTimeOption === "stillSleeping"
       };
       
       const response = await apiRequest("POST", "/api/sleep-records", payload);
