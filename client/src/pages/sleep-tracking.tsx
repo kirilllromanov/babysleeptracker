@@ -67,11 +67,21 @@ export default function SleepTracking() {
         }
       }
       
+      // Validate dates before creating payload
+      if (startTime.toString() === 'Invalid Date') {
+        throw new Error("Invalid start time");
+      }
+      
+      if (endTime && endTime.toString() === 'Invalid Date') {
+        throw new Error("Invalid end time");
+      }
+
       const payload = {
         childId: parseInt(values.childId),
         startTime: startTime.toISOString(),
-        endTime: endTime?.toISOString(),
-        isActive: values.endTimeOption === "stillSleeping"
+        endTime: endTime?.toISOString() || null,
+        isActive: values.endTimeOption === "stillSleeping",
+        quality: null
       };
       
       const response = await apiRequest("POST", "/api/sleep-records", payload);
