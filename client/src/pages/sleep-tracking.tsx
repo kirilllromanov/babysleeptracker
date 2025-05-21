@@ -55,16 +55,11 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
-      const startTime = new Date(values.startTime);
-      startTime.setHours(startTime.getHours(), startTime.getMinutes(), 0, 0);
+      const startTime = new Date(values.startTime).toISOString();
       
       const endTime = values.endTimeOption === "specific" && values.endTime 
-        ? new Date(values.endTime)
+        ? new Date(values.endTime).toISOString()
         : undefined;
-      
-      if (endTime) {
-        endTime.setHours(endTime.getHours(), endTime.getMinutes(), 0, 0);
-      }
       
       const payload = {
         childId: parseInt(values.childId),
