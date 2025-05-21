@@ -233,13 +233,36 @@ export default function SleepTracking() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Specific End Time</FormLabel>
-                      <FormControl>
-                        <Input 
-                          type="datetime-local" 
-                          {...field} 
-                          value={field.value || ""} 
-                        />
-                      </FormControl>
+                      <div className="space-y-2">
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
+                              onChange={(e) => {
+                                const currentTime = field.value ? new Date(field.value) : new Date();
+                                const [year, month, day] = e.target.value.split('-');
+                                currentTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                field.onChange(currentTime.toISOString());
+                              }}
+                            />
+                          </FormControl>
+                        </div>
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              type="time" 
+                              value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
+                              onChange={(e) => {
+                                const currentDate = field.value ? new Date(field.value) : new Date();
+                                const [hours, minutes] = e.target.value.split(':');
+                                currentDate.setHours(parseInt(hours), parseInt(minutes));
+                                field.onChange(currentDate.toISOString());
+                              }}
+                            />
+                          </FormControl>
+                        </div>
+                      </div>
                       <FormMessage />
                     </FormItem>
                   )}
