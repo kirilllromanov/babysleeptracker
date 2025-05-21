@@ -34,12 +34,17 @@ export const sleepRecords = pgTable("sleep_records", {
   quality: text("quality"),
 });
 
-export const insertSleepRecordSchema = createInsertSchema(sleepRecords).pick({
-  childId: true,
-  startTime: true,
-  endTime: true,
-  isActive: true,
-  quality: true,
+export const insertSleepRecordSchema = z.object({
+  childId: z.number(),
+  startTime: z.coerce.date(),
+  endTime: z.coerce.date().nullable(),
+  isActive: z.boolean(),
+  quality: z.string().nullable(),
+}).refine(data => {
+  if (data.endTime && data.startTime >= data.endTime) {
+    throw new Error("End time must be after start time");
+  }
+  return true;
 });
 
 export const updateSleepRecordSchema = createInsertSchema(sleepRecords).pick({

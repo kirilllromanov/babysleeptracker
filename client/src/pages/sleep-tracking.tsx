@@ -53,14 +53,18 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
-      // Ensure proper date formatting by creating Date objects
-      // Ensure proper ISO string formatting
       const startTime = new Date(values.startTime);
+      if (isNaN(startTime.getTime())) {
+        throw new Error("Invalid start time");
+      }
       startTime.setSeconds(0, 0);
       
-      let endTime;
+      let endTime = null;
       if (values.endTimeOption === "specific" && values.endTime) {
         endTime = new Date(values.endTime);
+        if (isNaN(endTime.getTime())) {
+          throw new Error("Invalid end time");
+        }
         endTime.setSeconds(0, 0);
         if (endTime <= startTime) {
           throw new Error("End time must be after start time");
