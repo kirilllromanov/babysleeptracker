@@ -18,11 +18,9 @@ import { format } from "date-fns";
 // Form schema for sleep tracking
 const sleepTrackingSchema = z.object({
   childId: z.string().min(1, "Please select a child"),
-  startTime: z.string().refine(time => !isNaN(Date.parse(time)), {
-    message: "Please enter a valid time",
-  }),
+  startTime: z.string().datetime({ message: "Please enter a valid date and time" }),
   endTimeOption: z.enum(["specific", "stillSleeping"]),
-  endTime: z.string().optional(),
+  endTime: z.string().datetime({ message: "Please enter a valid date and time" }).optional(),
 });
 
 type SleepTrackingValues = z.infer<typeof sleepTrackingSchema>;
@@ -162,7 +160,17 @@ export default function SleepTracking() {
                     <FormLabel>Start Time</FormLabel>
                     <div className="flex space-x-2">
                       <FormControl>
-                        <Input type="datetime-local" {...field} />
+                        <Input 
+                          type="datetime-local" 
+                          {...field} 
+                          value={field.value || ''} 
+                          onChange={(e) => {
+                            const date = new Date(e.target.value);
+                            if (!isNaN(date.getTime())) {
+                              field.onChange(date.toISOString());
+                            }
+                          }}
+                        />
                       </FormControl>
                       <Button 
                         type="button" 
