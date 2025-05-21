@@ -8,6 +8,10 @@ import { Child } from "@shared/schema";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { ClockIcon } from "lucide-react";
+import { TimePicker } from "@/components/ui/time-picker";
+import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MoonIcon } from "@/assets/icons";
@@ -192,18 +196,32 @@ export default function SleepTracking() {
                         </FormControl>
                       </div>
                       <div className="flex space-x-2">
-                        <FormControl>
-                          <Input 
-                            type="time" 
-                            value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
-                            onChange={(e) => {
-                              const currentDate = field.value ? new Date(field.value) : new Date();
-                              const [hours, minutes] = e.target.value.split(':');
-                              currentDate.setHours(parseInt(hours), parseInt(minutes));
-                              field.onChange(currentDate.toISOString());
-                            }}
-                          />
-                        </FormControl>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full pl-3 text-left font-normal",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                {field.value ? (
+                                  format(new Date(field.value), "HH:mm")
+                                ) : (
+                                  <span>Pick a time</span>
+                                )}
+                                <ClockIcon className="ml-auto h-4 w-4 opacity-50" />
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <TimePicker 
+                              date={field.value ? new Date(field.value) : new Date()} 
+                              setDate={(date) => field.onChange(date.toISOString())}
+                            />
+                          </PopoverContent>
+                        </Popover>
                         <Button 
                           type="button" 
                           variant="outline" 
