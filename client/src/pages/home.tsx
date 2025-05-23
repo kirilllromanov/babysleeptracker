@@ -22,6 +22,8 @@ export default function Home() {
   const { data: activeSleep, refetch: refetchActiveSleep } = useQuery<SleepRecord>({
     queryKey: [`/api/children/${selectedChildId}/active-sleep`],
     enabled: !!selectedChildId,
+    refetchOnMount: true, // Make sure data refreshes when returning to this page
+    refetchOnWindowFocus: true, // Refresh when window gains focus
   });
 
   // Handle sleeping status updates
@@ -47,12 +49,18 @@ export default function Home() {
         isActive: false,
       });
       
-      // Refresh data
+      // Show success message
+      toast({
+        title: "Sleep session ended",
+        description: "Sleep session has been recorded",
+      });
+      
+      // Refresh data to show updated predictions and sleep records
       await refetchActiveSleep();
       queryClient.invalidateQueries({ queryKey: [`/api/children/${selectedChildId}/sleep-records`] });
+      queryClient.invalidateQueries({ queryKey: [`/api/children/${selectedChildId}/sleep-prediction`] });
       
-      // Navigate to sleep quality assessment
-      navigate(`/sleep-quality?sleepId=${activeSleep.id}`);
+      // Stay on main page - no need to navigate away
     } catch (error) {
       toast({
         title: "Error ending sleep session",
