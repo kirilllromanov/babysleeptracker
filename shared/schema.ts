@@ -47,10 +47,10 @@ export const insertSleepRecordSchema = z.object({
   return true;
 });
 
-export const updateSleepRecordSchema = createInsertSchema(sleepRecords).pick({
-  endTime: true,
-  isActive: true,
-  quality: true,
+export const updateSleepRecordSchema = z.object({
+  endTime: z.coerce.date().optional(),
+  isActive: z.boolean().optional(),
+  quality: z.string().nullable().optional(),
 });
 
 export type InsertSleepRecord = z.infer<typeof insertSleepRecordSchema>;
