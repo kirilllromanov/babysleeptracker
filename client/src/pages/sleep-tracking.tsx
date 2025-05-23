@@ -18,9 +18,9 @@ import { format } from "date-fns";
 // Form schema for sleep tracking
 const sleepTrackingSchema = z.object({
   childId: z.string().min(1, "Please select a child"),
-  startTime: z.string().min(1, "Start time is required"),
+  startTime: z.string().datetime({ message: "Please enter a valid date and time" }),
   endTimeOption: z.enum(["specific", "stillSleeping"]),
-  endTime: z.string().optional(),
+  endTime: z.string().datetime({ message: "Please enter a valid date and time" }).optional(),
 });
 
 type SleepTrackingValues = z.infer<typeof sleepTrackingSchema>;
@@ -53,13 +53,37 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
-      // Use current time for simplicity
-      const now = new Date();
+      const startTime = new Date(values.startTime);
+      if (isNaN(startTime.getTime())) {
+        throw new Error("Invalid start time");
+      }
+      startTime.setSeconds(0, 0);
       
+      let endTime = null;
+      if (values.endTimeOption === "specific" && values.endTime) {
+        endTime = new Date(values.endTime);
+        if (isNaN(endTime.getTime())) {
+          throw new Error("Invalid end time");
+        }
+        endTime.setSeconds(0, 0);
+        if (endTime <= startTime) {
+          throw new Error("End time must be after start time");
+        }
+      }
+      
+      // Validate dates before creating payload
+      if (startTime.toString() === 'Invalid Date') {
+        throw new Error("Invalid start time");
+      }
+      
+      if (endTime && endTime.toString() === 'Invalid Date') {
+        throw new Error("Invalid end time");
+      }
+
       const payload = {
         childId: parseInt(values.childId),
-        startTime: now,
-        endTime: null,
+        startTime: startTime.toISOString(),
+        endTime: endTime?.toISOString() || null,
         isActive: values.endTimeOption === "stillSleeping",
         quality: null
       };
@@ -152,21 +176,44 @@ export default function SleepTracking() {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Start Time</FormLabel>
-                    <div className="flex items-center space-x-2">
-                      <FormControl>
-                        <Input type="text" value="Now" disabled />
-                      </FormControl>
-                      <Button 
-                        type="button" 
-                        variant="outline" 
-                        size="sm"
-                        onClick={handleNowClick}
-                        className="w-20"
-                      >
-                        Now
-                      </Button>
+                    <div className="space-y-2">
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input 
+                            type="date" 
+                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
+                            onChange={(e) => {
+                              const currentTime = field.value ? new Date(field.value) : new Date();
+                              const [year, month, day] = e.target.value.split('-');
+                              currentTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+                              field.onChange(currentTime.toISOString());
+                            }}
+                          />
+                        </FormControl>
+                      </div>
+                      <div className="flex space-x-2">
+                        <FormControl>
+                          <Input 
+                            type="time" 
+                            value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
+                            onChange={(e) => {
+                              const currentDate = field.value ? new Date(field.value) : new Date();
+                              const [hours, minutes] = e.target.value.split(':');
+                              currentDate.setHours(parseInt(hours), parseInt(minutes));
+                              field.onChange(currentDate.toISOString());
+                            }}
+                          />
+                        </FormControl>
+                        <Button 
+                          type="button" 
+                          variant="outline" 
+                          size="sm"
+                          onClick={handleNowClick}
+                        >
+                          Now
+                        </Button>
+                      </div>
                     </div>
-                    <p className="text-sm text-muted-foreground mt-1">Current time will be used</p>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -203,17 +250,37 @@ export default function SleepTracking() {
                   name="endTime"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Time</FormLabel>
-                      <div className="flex items-center space-x-2">
-                        <FormControl>
-                          <Input 
-                            type="text" 
-                            value="30 minutes after start"
-                            disabled
-                          />
-                        </FormControl>
+                      <FormLabel>Specific End Time</FormLabel>
+                      <div className="space-y-2">
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              type="date" 
+                              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
+                              onChange={(e) => {
+                                const currentTime = field.value ? new Date(field.value) : new Date();
+                                const [year, month, day] = e.target.value.split('-');
+                                currentTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
+                                field.onChange(currentTime.toISOString());
+                              }}
+                            />
+                          </FormControl>
+                        </div>
+                        <div className="flex space-x-2">
+                          <FormControl>
+                            <Input 
+                              type="time" 
+                              value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
+                              onChange={(e) => {
+                                const currentDate = field.value ? new Date(field.value) : new Date();
+                                const [hours, minutes] = e.target.value.split(':');
+                                currentDate.setHours(parseInt(hours), parseInt(minutes));
+                                field.onChange(currentDate.toISOString());
+                              }}
+                            />
+                          </FormControl>
+                        </div>
                       </div>
-                      <p className="text-sm text-muted-foreground mt-1">30 minutes from start time will be used</p>
                       <FormMessage />
                     </FormItem>
                   )}
