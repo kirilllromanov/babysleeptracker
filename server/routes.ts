@@ -88,6 +88,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get("/api/sleep-records/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const sleepRecord = await storage.getSleepRecord(id);
+      if (!sleepRecord) {
+        return res.status(404).json({ message: "Sleep record not found" });
+      }
+      res.json(sleepRecord);
+    } catch (err) {
+      res.status(500).json({ message: "Failed to fetch sleep record" });
+    }
+  });
+
   app.get("/api/children/:childId/active-sleep", async (req, res) => {
     try {
       const childId = parseInt(req.params.childId);
