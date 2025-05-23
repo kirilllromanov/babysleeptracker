@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MoonIcon } from "@/assets/icons";
+import { MoonIcon, ClockIcon } from "@/assets/icons";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
@@ -18,9 +18,11 @@ import { format } from "date-fns";
 // Form schema for sleep tracking
 const sleepTrackingSchema = z.object({
   childId: z.string().min(1, "Please select a child"),
-  startTime: z.string().datetime({ message: "Please enter a valid date and time" }),
+  startDate: z.string().min(1, "Please select a date"),
+  startTime: z.string().min(1, "Please select a time"),
   endTimeOption: z.enum(["specific", "stillSleeping"]),
-  endTime: z.string().datetime({ message: "Please enter a valid date and time" }).optional(),
+  endDate: z.string().optional(),
+  endTime: z.string().optional(),
 });
 
 type SleepTrackingValues = z.infer<typeof sleepTrackingSchema>;
@@ -37,15 +39,18 @@ export default function SleepTracking() {
   
   // Get current date and time in local format
   const now = new Date();
-  const currentDateTime = format(now, "yyyy-MM-dd'T'HH:mm");
+  const currentDate = format(now, "yyyy-MM-dd");
+  const currentTime = format(now, "HH:mm");
 
   const form = useForm<SleepTrackingValues>({
     resolver: zodResolver(sleepTrackingSchema),
     defaultValues: {
       childId: "",
-      startTime: currentDateTime,
+      startDate: currentDate,
+      startTime: currentTime,
       endTimeOption: "stillSleeping",
-      endTime: "",
+      endDate: currentDate,
+      endTime: currentTime,
     },
   });
 
@@ -53,37 +58,31 @@ export default function SleepTracking() {
 
   async function onSubmit(values: SleepTrackingValues) {
     try {
-      const startTime = new Date(values.startTime);
-      if (isNaN(startTime.getTime())) {
-        throw new Error("Invalid start time");
-      }
-      startTime.setSeconds(0, 0);
+      // Create start date/time by combining the date and time strings
+      const [startYear, startMonth, startDay] = values.startDate.split('-').map(Number);
+      const [startHour, startMinute] = values.startTime.split(':').map(Number);
       
-      let endTime = null;
-      if (values.endTimeOption === "specific" && values.endTime) {
-        endTime = new Date(values.endTime);
-        if (isNaN(endTime.getTime())) {
-          throw new Error("Invalid end time");
-        }
-        endTime.setSeconds(0, 0);
-        if (endTime <= startTime) {
+      const startDateTime = new Date(startYear, startMonth - 1, startDay, startHour, startMinute, 0);
+      
+      let endDateTime = null;
+      
+      if (values.endTimeOption === "specific" && values.endDate && values.endTime) {
+        const [endYear, endMonth, endDay] = values.endDate.split('-').map(Number);
+        const [endHour, endMinute] = values.endTime.split(':').map(Number);
+        
+        endDateTime = new Date(endYear, endMonth - 1, endDay, endHour, endMinute, 0);
+        
+        // Validate end time is after start time
+        if (endDateTime <= startDateTime) {
           throw new Error("End time must be after start time");
         }
       }
       
-      // Validate dates before creating payload
-      if (startTime.toString() === 'Invalid Date') {
-        throw new Error("Invalid start time");
-      }
-      
-      if (endTime && endTime.toString() === 'Invalid Date') {
-        throw new Error("Invalid end time");
-      }
-
+      // Create payload with properly formatted date/times
       const payload = {
         childId: parseInt(values.childId),
-        startTime: startTime.toISOString(),
-        endTime: endTime?.toISOString() || null,
+        startTime: startDateTime.toISOString(),
+        endTime: endDateTime?.toISOString() || null,
         isActive: values.endTimeOption === "stillSleeping",
         quality: null
       };
@@ -123,7 +122,9 @@ export default function SleepTracking() {
   }
 
   const handleNowClick = () => {
-    form.setValue("startTime", currentDateTime);
+    const now = new Date();
+    form.setValue("startDate", format(now, "yyyy-MM-dd"));
+    form.setValue("startTime", format(now, "HH:mm"));
   };
 
   return (
@@ -170,54 +171,54 @@ export default function SleepTracking() {
                 )}
               />
               
-              <FormField
-                control={form.control}
-                name="startTime"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Start Time</FormLabel>
-                    <div className="space-y-2">
-                      <div className="flex space-x-2">
+              <div className="space-y-3">
+                <FormLabel>Start Time</FormLabel>
+                <div className="flex items-center justify-between mb-2">
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm"
+                    onClick={handleNowClick}
+                    className="flex items-center gap-1 ml-auto"
+                  >
+                    <ClockIcon className="h-3 w-3" />
+                    Now
+                  </Button>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="startDate"
+                    render={({ field }) => (
+                      <FormItem>
                         <FormControl>
                           <Input 
                             type="date" 
-                            value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
-                            onChange={(e) => {
-                              const currentTime = field.value ? new Date(field.value) : new Date();
-                              const [year, month, day] = e.target.value.split('-');
-                              currentTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
-                              field.onChange(currentTime.toISOString());
-                            }}
+                            {...field}
                           />
                         </FormControl>
-                      </div>
-                      <div className="flex space-x-2">
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="startTime"
+                    render={({ field }) => (
+                      <FormItem>
                         <FormControl>
                           <Input 
                             type="time" 
-                            value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
-                            onChange={(e) => {
-                              const currentDate = field.value ? new Date(field.value) : new Date();
-                              const [hours, minutes] = e.target.value.split(':');
-                              currentDate.setHours(parseInt(hours), parseInt(minutes));
-                              field.onChange(currentDate.toISOString());
-                            }}
+                            {...field}
                           />
                         </FormControl>
-                        <Button 
-                          type="button" 
-                          variant="outline" 
-                          size="sm"
-                          onClick={handleNowClick}
-                        >
-                          Now
-                        </Button>
-                      </div>
-                    </div>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
               
               <FormField
                 control={form.control}
@@ -245,46 +246,43 @@ export default function SleepTracking() {
               />
               
               {watchEndTimeOption === "specific" && (
-                <FormField
-                  control={form.control}
-                  name="endTime"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Specific End Time</FormLabel>
-                      <div className="space-y-2">
-                        <div className="flex space-x-2">
-                          <FormControl>
-                            <Input 
-                              type="date" 
-                              value={field.value ? new Date(field.value).toISOString().split('T')[0] : ''} 
-                              onChange={(e) => {
-                                const currentTime = field.value ? new Date(field.value) : new Date();
-                                const [year, month, day] = e.target.value.split('-');
-                                currentTime.setFullYear(parseInt(year), parseInt(month) - 1, parseInt(day));
-                                field.onChange(currentTime.toISOString());
-                              }}
-                            />
-                          </FormControl>
-                        </div>
-                        <div className="flex space-x-2">
-                          <FormControl>
-                            <Input 
-                              type="time" 
-                              value={field.value ? new Date(field.value).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : ''} 
-                              onChange={(e) => {
-                                const currentDate = field.value ? new Date(field.value) : new Date();
-                                const [hours, minutes] = e.target.value.split(':');
-                                currentDate.setHours(parseInt(hours), parseInt(minutes));
-                                field.onChange(currentDate.toISOString());
-                              }}
-                            />
-                          </FormControl>
-                        </div>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                <div className="grid grid-cols-2 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="endDate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Date</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="date" 
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  
+                  <FormField
+                    control={form.control}
+                    name="endTime"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>End Time</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="time" 
+                            {...field}
+                            value={field.value || ""}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               )}
               
               <div className="flex space-x-3 pt-4">
