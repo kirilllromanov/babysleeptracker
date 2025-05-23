@@ -22,8 +22,6 @@ export default function Home() {
   const { data: activeSleep, refetch: refetchActiveSleep } = useQuery<SleepRecord>({
     queryKey: [`/api/children/${selectedChildId}/active-sleep`],
     enabled: !!selectedChildId,
-    refetchOnMount: true, // Make sure data refreshes when returning to this page
-    refetchOnWindowFocus: true, // Refresh when window gains focus
   });
 
   // Handle sleeping status updates
@@ -43,31 +41,18 @@ export default function Home() {
     if (!activeSleep) return;
     
     try {
-      // Store the child ID for use after the update
-      const childId = activeSleep.childId;
-      
-      // End the sleep session and add quality in one step
+      // End the sleep session
       await apiRequest("PATCH", `/api/sleep-records/${activeSleep.id}`, {
         endTime: new Date(),
         isActive: false,
-        quality: "slept well", // Set a default quality
       });
       
-      // Show success message
-      toast({
-        title: "Sleep session ended",
-        description: "Sleep session has been recorded",
-      });
-      
-      // Force refresh all relevant data
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [`/api/children/${childId}/active-sleep`] }),
-        queryClient.invalidateQueries({ queryKey: [`/api/children/${childId}/sleep-records`] }),
-        queryClient.invalidateQueries({ queryKey: [`/api/children/${childId}/sleep-prediction`] })
-      ]);
-      
-      // Manually trigger a data refresh
+      // Refresh data
       await refetchActiveSleep();
+      queryClient.invalidateQueries({ queryKey: [`/api/children/${selectedChildId}/sleep-records`] });
+      
+      // Navigate to sleep quality assessment
+      navigate(`/sleep-quality?sleepId=${activeSleep.id}`);
     } catch (error) {
       toast({
         title: "Error ending sleep session",
