@@ -109,7 +109,8 @@ export async function predictNextSleep(
         confidence: predictionData.confidence || 0.5,
       };
     } catch (openaiError) {
-      console.log("OpenAI API error, using rule-based prediction instead:", openaiError.message);
+      const errorMessage = openaiError instanceof Error ? openaiError.message : String(openaiError);
+      console.log("OpenAI API error, using rule-based prediction instead:", errorMessage);
       
       // Rule-based prediction fallback that works without API
       const now = new Date();
