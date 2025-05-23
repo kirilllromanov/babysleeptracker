@@ -84,9 +84,12 @@ export default function Home() {
             <div className="flex flex-col items-center text-center">
               <MoonIcon className="h-12 w-12 text-blue-300 mb-2" />
               <h2 className="text-xl font-semibold mb-1">Currently Sleeping</h2>
-              <p className="text-muted-foreground mb-4">
-                Sleep started {formatSleepDuration(new Date(activeSleep.startTime), null)} ago
-              </p>
+              <div className="bg-navy-dark rounded-lg px-4 py-3 mb-4 w-full max-w-xs">
+                <p className="text-sm font-medium text-lavender-300 mb-1">Time in bed</p>
+                <p className="text-2xl font-bold text-white">
+                  {formatSleepDuration(new Date(activeSleep.startTime), null)}
+                </p>
+              </div>
               <Button 
                 variant="default" 
                 size="lg" 
